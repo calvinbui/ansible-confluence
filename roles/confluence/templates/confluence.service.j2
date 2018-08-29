@@ -1,0 +1,16 @@
+[Unit]
+Description=Confluence
+After=network.target
+
+[Service]
+Type=forking
+User=confluence
+PIDFile={{ confluence_running_dir }}/work/catalina.pid
+ExecStart={{ confluence_running_dir }}/bin/start-confluence.sh
+ExecStop={{ confluence_running_dir }}/bin/stop-confluence.sh
+TimeoutSec=200
+LimitNOFILE=2048
+LimitNPROC=2048
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,94 @@
+---
+
+- name: Create dedicated confluence user
+  user:
+    name: "{{ confluence_user }}"
+    comment: "Account for running Confluence"
+    shell: /bin/bash
+    create_home: yes
+  become: yes
+
+- name: Make me part of confluence group
+  user:
+    name: calvin
+    groups: "{{ confluence_user }}"
+    append: yes
+  become: yes
+
+- name: Create confluence directories
+  file:
+    path: "{{ item.value }}"
+    owner: "{{ confluence_user }}"
+    group: "{{ confluence_user }}"
+    state: directory
+    mode: "ug=rwx,o-rwx"
+  become: true
+  loop: "{{ confluence_dirs|dict2items }}"
+
+- name: Download confluence
+  get_url:
+    url: "{{ confluence_download_link }}"
+    dest: "{{ confluence_dirs.downloads }}/atlassian-confluence-{{ confluence_version }}.tar.gz"
+    owner: "{{ confluence_user }}"
+    group: "{{ confluence_user }}"
+  register: downloaded
+  become: yes
+
+- name: Extract confluence version
+  unarchive:
+    src: "{{ confluence_dirs.downloads }}/atlassian-confluence-{{ confluence_version }}.tar.gz"
+    dest: "{{ confluence_dirs.versions }}"
+    owner: "{{ confluence_user }}"
+    group: "{{ confluence_user }}"
+    remote_src: yes
+  when: downloaded.changed
+  become: yes
+
+- name: Service unit file
+  template:
+    src: confluence.service.j2
+    dest: /lib/systemd/system/confluence.service
+    mode: 0644
+  become: true
+
+- name: Stop confluence
+  systemd:
+    name: confluence
+    state: stopped
+  become: true
+  when: downloaded.changed
+
+- name: Update symlink version to install
+  file:
+    src: "{{ confluence_dirs.versions }}/atlassian-confluence-{{ confluence_version }}"
+    dest: "{{ confluence_running_dir }}"
+    owner: "{{ confluence_user }}"
+    group: "{{ confluence_user }}"
+    state: link
+  become: yes
+  when: downloaded.changed
+
+- name: Update confluence config to specify data directory
+  lineinfile:
+    path: "{{ confluence_running_dir }}/confluence/WEB-INF/classes/confluence-init.properties"
+    regexp: "^# confluence.home=c:/confluence/data"
+    line: "confluence.home={{ confluence_dirs.data }}"
+    backrefs: yes
+    owner: "{{ confluence_user }}"
+    group: "{{ confluence_user }}"
+  become: yes
+
+- name: Service unit file
+  template:
+    src: confluence.service.j2
+    dest: /lib/systemd/system/confluence.service
+    mode: 0644
+  become: true
+
+- name: Enable and start confluence service
+  systemd:
+    name: confluence
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  become: true

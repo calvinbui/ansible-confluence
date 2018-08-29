@@ -1,0 +1,13 @@
+---
+
+
+
+- name: Update confluence config
+  lineinfile:
+    path: "{{ confluence_running_dir }}/confluence/WEB-INF/classes/confluence-init.properties"
+    regexp: "^# confluence.home=c:/confluence/data"
+    line: "confluence.home={{ confluence_dirs.data }}"
+    backrefs: yes
+    owner: "{{ confluence_user }}"
+    group: "{{ confluence_user }}"
+  become: yes
