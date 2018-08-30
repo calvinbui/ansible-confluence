@@ -8,14 +8,7 @@
     create_home: yes
   become: yes
 
-- name: Make me part of confluence group
-  user:
-    name: calvin
-    groups: "{{ confluence_user }}"
-    append: yes
-  become: yes
-
-- name: Create confluence directories
+- name: Create directories
   file:
     path: "{{ item.value }}"
     owner: "{{ confluence_user }}"
@@ -25,7 +18,7 @@
   become: true
   loop: "{{ confluence_dirs|dict2items }}"
 
-- name: Download confluence
+- name: Download archive
   get_url:
     url: "{{ confluence_download_link }}"
     dest: "{{ confluence_dirs.downloads }}/atlassian-confluence-{{ confluence_version }}.tar.gz"
@@ -34,7 +27,7 @@
   register: downloaded
   become: yes
 
-- name: Extract confluence version
+- name: Extract archive
   unarchive:
     src: "{{ confluence_dirs.downloads }}/atlassian-confluence-{{ confluence_version }}.tar.gz"
     dest: "{{ confluence_dirs.versions }}"
@@ -51,14 +44,13 @@
     mode: 0644
   become: true
 
-- name: Stop confluence
+- name: Stop service if running
   systemd:
     name: confluence
     state: stopped
   become: true
-  when: downloaded.changed
 
-- name: Update symlink version to install
+- name: Update symlink to new downloaded version
   file:
     src: "{{ confluence_dirs.versions }}/atlassian-confluence-{{ confluence_version }}"
     dest: "{{ confluence_running_dir }}"
@@ -68,7 +60,7 @@
   become: yes
   when: downloaded.changed
 
-- name: Update confluence config to specify data directory
+- name: Update config to specify data directory
   lineinfile:
     path: "{{ confluence_running_dir }}/confluence/WEB-INF/classes/confluence-init.properties"
     regexp: "^# confluence.home=c:/confluence/data"
@@ -78,14 +70,7 @@
     group: "{{ confluence_user }}"
   become: yes
 
-- name: Service unit file
-  template:
-    src: confluence.service.j2
-    dest: /lib/systemd/system/confluence.service
-    mode: 0644
-  become: true
-
-- name: Enable and start confluence service
+- name: Enable and start service
   systemd:
     name: confluence
     state: started
