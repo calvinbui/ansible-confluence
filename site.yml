@@ -2,6 +2,6 @@
 
 - hosts: all
   roles:
-  # - java
-  # - postgres
+  - java
+  - postgres
   - confluence
