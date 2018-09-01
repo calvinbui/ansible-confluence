@@ -31,7 +31,7 @@
   postgresql_db:
     name: "{{ postgres_db_name }}"
     encoding: UTF8
-    lc_collate: en_AU.UTF-8
+    template: template0
   become: yes
   become_user: postgres
 
