@@ -19,3 +19,27 @@
     state: present
     update_cache: yes
   become: yes
+
+- name: Install psycopg2
+  apt:
+    name: "python-psycopg2"
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Create db
+  postgresql_db:
+    name: "{{ postgres_db_name }}"
+    encoding: UTF8
+    lc_collate: en_AU.UTF-8
+  become: yes
+  become_user: postgres
+
+- name: Create db user
+  postgresql_user:
+    db: "{{ postgres_db_name }}"
+    name: "{{ postgres_db_user }}"
+    priv: ALL
+    state: present
+  become: yes
+  become_user: postgres
