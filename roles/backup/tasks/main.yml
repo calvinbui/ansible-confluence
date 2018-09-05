@@ -53,6 +53,7 @@
   cron:
     name: "Backup confluence"
     value: "cd {{ backup_folder }} && /usr/local/bin/duplicacy backup"
-    minute: "*/1"
+    minute: "0"
+    hour: "4"
     state: present
   become: true
