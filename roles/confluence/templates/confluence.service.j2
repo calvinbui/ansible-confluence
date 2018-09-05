@@ -9,8 +9,8 @@ PIDFile={{ confluence_running_dir }}/work/catalina.pid
 ExecStart={{ confluence_running_dir }}/bin/start-confluence.sh
 ExecStop={{ confluence_running_dir }}/bin/stop-confluence.sh
 TimeoutSec=200
-LimitNOFILE=2048
-LimitNPROC=2048
+LimitNOFILE=4096
+LimitNPROC=4096
 
 [Install]
 WantedBy=multi-user.target

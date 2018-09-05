@@ -49,6 +49,7 @@
     name: confluence
     state: stopped
   become: true
+  when: downloaded.changed
 
 - name: Update symlink to new downloaded version
   file:
@@ -69,6 +70,28 @@
     owner: "{{ confluence_user }}"
     group: "{{ confluence_user }}"
   become: yes
+
+- name: Increase thread limits
+  pam_limits:
+    dest: /etc/security/limits.d/99-confluence.conf
+    domain: "{{ confluence_user }}"
+    limit_type: "{{ item.type }}"
+    limit_item: "{{ item.item }}"
+    value: "{{ item.value }}"
+  become: yes
+  loop:
+    - type: soft
+      item: nofile
+      value: 4096
+    - type: hard
+      item: nofile
+      value: 8192
+    - type: soft
+      item: nproc
+      value: 4096
+    - type: hard
+      item: nproc
+      value: 8192
 
 - name: Enable and start service
   systemd:
