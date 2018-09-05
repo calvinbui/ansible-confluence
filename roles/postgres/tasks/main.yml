@@ -39,6 +39,7 @@
   postgresql_user:
     db: "{{ postgres_db_name }}"
     name: "{{ postgres_db_user }}"
+    password: "{{ postgres_db_password }}"
     priv: ALL
     state: present
   become: yes
