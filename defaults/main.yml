@@ -4,8 +4,6 @@ confluence_version: 6.11.0
 confluence_user: confluence
 confluence_download_link: "https://www.atlassian.com/software/confluence/downloads/binary/atlassian-confluence-{{ confluence_version }}.tar.gz"
 confluence_running_dir: /opt/confluence/running # running folder
-confluence_dirs:
-  directory: /opt/confluence
-  downloads: /opt/confluence/downloads # where archives are downloaded
-  versions: /opt/confluence/versions # where archives are unpacked
-  data: /opt/confluence/data # data folder
+confluence_downloads_dir: /opt/confluence/downloads # where archives are downloaded
+confluence_versions_dir: /opt/confluence/versions # where archives are unpacked
+confluence_data_dir: /opt/confluence/data # data folder

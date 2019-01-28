@@ -6,7 +6,6 @@
     comment: "Account for running Confluence"
     shell: /bin/bash
     create_home: yes
-  become: yes
 
 - name: Create directories
   file:
@@ -14,62 +13,58 @@
     owner: "{{ confluence_user }}"
     group: "{{ confluence_user }}"
     state: directory
-    mode: "ug=rwx,o-rwx"
-  become: true
-  loop: "{{ confluence_dirs|dict2items }}"
+  loop:
+    - "{{ confluence_running_dir }}"
+    - "{{ confluence_downloads_dir }}"
+    - "{{ confluence_versions_dir }}"
+    - "{{ confluence_data_dir }}"
 
 - name: Download archive
   get_url:
     url: "{{ confluence_download_link }}"
-    dest: "{{ confluence_dirs.downloads }}/atlassian-confluence-{{ confluence_version }}.tar.gz"
+    dest: "{{ confluence_download_dir }}/atlassian-confluence-{{ confluence_version }}.tar.gz"
     owner: "{{ confluence_user }}"
     group: "{{ confluence_user }}"
   register: downloaded
-  become: yes
 
 - name: Extract archive
   unarchive:
-    src: "{{ confluence_dirs.downloads }}/atlassian-confluence-{{ confluence_version }}.tar.gz"
-    dest: "{{ confluence_dirs.versions }}"
+    src: "{{ confluence_download_dir }}/atlassian-confluence-{{ confluence_version }}.tar.gz"
+    dest: "{{ confluence_versions_dir }}"
     owner: "{{ confluence_user }}"
     group: "{{ confluence_user }}"
     remote_src: yes
   when: downloaded.changed
-  become: yes
 
 - name: Service unit file
   template:
     src: confluence.service.j2
     dest: /lib/systemd/system/confluence.service
     mode: 0644
-  become: true
 
 - name: Stop service if running
   systemd:
     name: confluence
     state: stopped
-  become: true
   when: downloaded.changed
 
 - name: Update symlink to new downloaded version
   file:
-    src: "{{ confluence_dirs.versions }}/atlassian-confluence-{{ confluence_version }}"
+    src: "{{ confluence_versions_dir }}/atlassian-confluence-{{ confluence_version }}"
     dest: "{{ confluence_running_dir }}"
     owner: "{{ confluence_user }}"
     group: "{{ confluence_user }}"
     state: link
-  become: yes
   when: downloaded.changed
 
 - name: Update config to specify data directory
   lineinfile:
     path: "{{ confluence_running_dir }}/confluence/WEB-INF/classes/confluence-init.properties"
     regexp: "^# confluence.home=c:/confluence/data"
-    line: "confluence.home={{ confluence_dirs.data }}"
+    line: "confluence.home={{ confluence_data_dir }}"
     backrefs: yes
     owner: "{{ confluence_user }}"
     group: "{{ confluence_user }}"
-  become: yes
 
 - name: Increase thread limits
   pam_limits:
@@ -78,7 +73,6 @@
     limit_type: "{{ item.type }}"
     limit_item: "{{ item.item }}"
     value: "{{ item.value }}"
-  become: yes
   loop:
     - type: soft
       item: nofile
@@ -99,4 +93,3 @@
     state: started
     enabled: yes
     daemon_reload: yes
-  become: true
