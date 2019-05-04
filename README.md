@@ -1,3 +1,5 @@
+[Deprecated. Use confluence-docker instead](https://github.com/calvinbui/ansible-confluence-docker)
+
 # Ansible Confluence
 
 Installs Confluence following the official documentation.
